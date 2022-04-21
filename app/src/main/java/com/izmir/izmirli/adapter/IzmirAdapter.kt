@@ -27,7 +27,7 @@ class IzmirAdapter : RecyclerView.Adapter<IzmirAdapter.IzmirViewHolder>() {
 
     inner class IzmirViewHolder(view: View) : RecyclerView.ViewHolder(view){
         fun bind(s: NobetciEczaneResponse.NobetciEczaneResponseItem) {
-            itemView.tv_item.text = s.adi?.lowercase()
+            itemView.tv_item.text = s.adi?.lowercase()?.replaceFirstChar { it.uppercase() }
             s.adi?.let {
                 if (it.length > 15){
                     itemView.tv_item.setTextColor(ContextCompat.getColor(itemView.context,
@@ -35,6 +35,7 @@ class IzmirAdapter : RecyclerView.Adapter<IzmirAdapter.IzmirViewHolder>() {
                     ))
                 }
             }
+
 
             itemView.setOnClickListener {
                 eczaneClickListener(s)
@@ -45,6 +46,10 @@ class IzmirAdapter : RecyclerView.Adapter<IzmirAdapter.IzmirViewHolder>() {
     fun setIzmirData(listIzmir: ArrayList<NobetciEczaneResponse.NobetciEczaneResponseItem>){
         izmirDataList.clear()
         izmirDataList.addAll(listIzmir)
+        notifyDataSetChanged()
+    }
+    fun clear(){
+        izmirDataList.clear()
         notifyDataSetChanged()
     }
 }

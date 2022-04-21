@@ -3,6 +3,7 @@ package com.izmir.izmirli.util
 import android.content.Context
 import android.widget.Toast
 import com.google.android.material.tabs.TabLayout
+import com.izmir.izmirli.model.Location
 
 fun categoryList() : ArrayList<String> {
     var categoryList: ArrayList<String> = arrayListOf()
@@ -68,4 +69,8 @@ fun TabLayout.onTabSelectedListener(
             onUnselected.invoke(tab)
         }
     })
+}
+
+fun ArrayList<Location>.locationList() : ArrayList<Location>{
+    return this
 }

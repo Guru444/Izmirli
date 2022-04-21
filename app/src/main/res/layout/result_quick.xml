@@ -15,7 +15,7 @@
        app:layout_constraintStart_toStartOf="parent"
        app:layout_constraintTop_toTopOf="parent"
        tools:text="DENEME"
-       android:textSize="18dp"
+       android:textSize="24dp"
        android:layout_height="wrap_content"/>
 
 
@@ -26,11 +26,19 @@
         android:textColor="@color/black"
         android:gravity="center"
         android:textSize="20dp"
-        android:padding="64dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/tv_eczane_title" />
 
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btn_open_location"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Lokasyona git"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_result"
+        android:layout_margin="12dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

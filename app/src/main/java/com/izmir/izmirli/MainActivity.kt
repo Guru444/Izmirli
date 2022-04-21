@@ -1,5 +1,6 @@
 package com.izmir.izmirli
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -7,9 +8,11 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.tabs.TabLayout
+import com.izmir.izmirli.adapter.EczaneNameAdapter
 import com.izmir.izmirli.adapter.IzmirAdapter
 import com.izmir.izmirli.databinding.ActivityMainBinding
 import com.izmir.izmirli.model.GameTypeResponse
@@ -26,13 +29,24 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.logging.Handler
+import android.view.MotionEvent
+
+import android.view.View.OnTouchListener
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.izmir.izmirli.model.Location
+
 
 class MainActivity : AppCompatActivity(), Example {
 
     private val izmirAdapter = IzmirAdapter()
+    private val eczaneNameAdapter = EczaneNameAdapter()
+    private var eczaneNameList: ArrayList<String?> = arrayListOf()
+    private var eczaneList: ArrayList<NobetciEczaneResponse.NobetciEczaneResponseItem> = arrayListOf()
+    private var locationList: ArrayList<Location> = arrayListOf()
     private lateinit var binding: ActivityMainBinding
     private lateinit var exampleInterface: Example
     private var izmirAPIService = IzmirAPIService()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,9 +55,18 @@ class MainActivity : AppCompatActivity(), Example {
         binding.pbLoader.visibility = View.VISIBLE
         exampleInterface = this
 
+        binding.apply {
         categoryList().forEach {
-            binding.tbCategory.addTab(binding.tbCategory.newTab().setText(it))
+            tbCategory.addTab(tbCategory.newTab().setText(it))
         }
+
+        swRefresh.setOnRefreshListener(object : SwipeRefreshLayout.OnRefreshListener{
+            override fun onRefresh() {
+                izmirAdapter.setIzmirData(eczaneList)
+                swRefresh.isRefreshing = false
+                searchInput.text?.clear()
+            }
+        })
 
         izmirAPIService.getNobetciEczane()
             .subscribeOn(Schedulers.newThread())
@@ -51,15 +74,24 @@ class MainActivity : AppCompatActivity(), Example {
                 @RequiresApi(Build.VERSION_CODES.O)
                 override fun onSuccess(eczaneler: NobetciEczaneResponse) {
                     runOnUiThread {
-                        eczaneler[0].tarih?.replace("T08:00:00", " ")?.trim()?.let {
-                            Log.i("Tarih",
-                                it
-                            )
-                        }
+                        eczaneler[0].tarih?.replace("T08:00:00", " ")?.trim()?.let { Log.i("Tarih", it) }
                         //filter fun -> .filter { it.bolgeId == 19 } as ArrayList<NobetciEczaneResponse.NobetciEczaneResponseItem>
                         izmirAdapter.setIzmirData(eczaneler)
+                        eczaneler.forEach {
+                            it.let {
+                                eczaneNameList.add(it.adi)
+                                var location = Location().apply {
+                                    lat = it.lokasyonX?.toDouble()
+                                    long = it.lokasyonY?.toDouble()
+                                    name = it.adi
+                                }
+                                locationList.add(location)
+                            }
+                        }
+
+                        eczaneList.addAll(eczaneler)
                         Log.i("response", eczaneler.toString())
-                        binding.pbLoader.visibility = View.GONE
+                        pbLoader.visibility = View.GONE
                     }
                 }
                 override fun onError(e: Throwable) {
@@ -68,17 +100,24 @@ class MainActivity : AppCompatActivity(), Example {
                 }
             })
 
-        binding.apply {
+        searchInput.doAfterTextChanged {
+            it?.let { search->
+                if (search.isNotEmpty()){
+                    if (it.length > 3){
+                        izmirAdapter.setIzmirData(eczaneList.filter { it.adi?.lowercase()?.startsWith(search.toString().lowercase()) == true } as ArrayList<NobetciEczaneResponse.NobetciEczaneResponseItem>)
+                    }
+                }else{
+                    izmirAdapter.clear()
+                    izmirAdapter.setIzmirData(eczaneList)
+                }
+            }
+        }
             izmirAdapter.eczaneClickListener = {
-                this@MainActivity.eczaneDetay(it)
+                this@MainActivity.eczaneDetay(it, locationList.locationList())
             }
 
             rvMultitypeList.layoutManager = LinearLayoutManager(applicationContext, LinearLayoutManager.VERTICAL, false)
             rvMultitypeList.adapter = izmirAdapter
-
-            categoryList().forEach {
-
-            }
 
             tbCategory.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener{
                 override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -94,7 +133,6 @@ class MainActivity : AppCompatActivity(), Example {
                 override fun onTabReselected(tab: TabLayout.Tab?) {
                 }
             })
-
             tbSubCategory.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener{
                 override fun onTabSelected(tab: TabLayout.Tab?) {
                     when(tab?.position){
@@ -116,6 +154,7 @@ class MainActivity : AppCompatActivity(), Example {
         }
     }
 
+    //Example interface
     override fun listeyiDoldur(liste: ArrayList<String>) {
 
     }
